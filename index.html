@@ -108,8 +108,37 @@ aside.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:1
 .empty{color:var(--muted);font-size:.9rem}
 .allstudies summary{cursor:pointer;font-size:.88rem;color:var(--accent);margin-top:14px}
 @media (prefers-reduced-motion:no-preference){.node rect.box,.edge{transition:stroke .2s,fill .2s}}
+#printView{display:none}
+.export{background:var(--accent)!important;color:var(--paper)!important;border-color:var(--accent)!important;font-weight:600}
+@media print{
+  :root,:root:not([data-theme="light"]),:root[data-theme="dark"]{
+    --paper:#FFFFFF; --sheet:#FFFFFF; --ink:#18262B; --muted:#4A5A5F; --rule:#C9D3D2; --accent:#23607A; --accent-soft:#E1ECF0;
+    --marker:#F4D44D; --marker-ink:#3B3000; --node:#FFFFFF; --node-root:#18262B; --node-root-ink:#FFFFFF; --edge:#8FA4A8; color-scheme:light}
+  @page{margin:16mm 14mm}
+  body{padding:0;background:#fff;font-size:11pt}
+  .app{display:none!important}
+  #printView{display:block;color:var(--ink);font-family:var(--body);line-height:1.5}
+  #printView h1{font-family:var(--display);font-weight:400;font-size:24pt;margin:0 0 4pt}
+  #printView .pmeta{color:var(--muted);font-size:9pt;margin-bottom:12pt}
+  #printView .psum{font-size:11.5pt;margin:0 0 14pt}
+  #printView .pmap{border:1px solid var(--rule);border-radius:6px;padding:6pt;margin:0 0 6pt;break-inside:avoid}
+  #printView .pmap svg{width:100%;height:auto;max-height:235mm;display:block}
+  #printView .pmap .elabel rect{fill:#fff}
+  #printView h2{font-family:var(--display);font-weight:400;font-size:16pt;margin:18pt 0 6pt;break-after:avoid}
+  #printView h3{font-size:12.5pt;margin:12pt 0 3pt;break-after:avoid}
+  #printView h4{font-size:11pt;margin:9pt 0 2pt;break-after:avoid}
+  #printView .pt{break-inside:avoid}
+  #printView .lnk{font-size:9.5pt;color:var(--muted);border-left:3px solid var(--marker);padding-left:7pt;margin:2pt 0 4pt}
+  #printView .lnk b{color:var(--accent);font-family:var(--mono);font-weight:500;font-size:8.5pt}
+  #printView .cite{font-size:9pt;color:var(--muted)}
+  #printView .lvl{margin-left:12pt}
+  #printView ol.refs{padding-left:18pt;font-size:9.5pt}
+  #printView ol.refs li{margin-bottom:4pt;break-inside:avoid}
+  #printView .newpage{break-before:page}
+}
 </style>
 
+<div id="printView" aria-hidden="true"></div>
 <div class="app">
   <header>
     <div class="brand">
@@ -147,6 +176,7 @@ aside.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:1
         <button type="button" id="zoomIn" aria-label="Aumentar">+</button>
         <button type="button" id="expandAll">Abrir tudo</button>
         <button type="button" id="collapseAll">Recolher</button>
+        <button type="button" id="exportPdf" class="export">Exportar PDF</button>
       </div>
       <div class="canvas" id="canvas"><svg class="map" id="svg" role="tree"></svg></div>
     </section>
@@ -517,6 +547,45 @@ $("#zoomIn").onclick=()=>{zoom=Math.min(1.8,zoom+.15); render();};
 $("#zoomOut").onclick=()=>{zoom=Math.max(.45,zoom-.15); render();};
 $("#expandAll").onclick=()=>{ walk(state.root,n=>n.collapsed=false); render(); };
 $("#collapseAll").onclick=()=>{ walk(state.root,(n,p,d)=>{ if(d>=1) n.collapsed=true; }); render(); };
+
+/* ---------- Exportar PDF ---------- */
+function exportPdf(){
+  if(!state) return;
+  const saved=[]; walk(state.root,n=>{ saved.push([n,n.collapsed]); n.collapsed=false; });
+  const prevSel=selected, prevZoom=zoom; selected=null; zoom=1; render();
+  const svg=$("#svg").cloneNode(true); svg.removeAttribute("width"); svg.removeAttribute("height"); svg.removeAttribute("id");
+  saved.forEach(([n,c])=>n.collapsed=c); selected=prevSel; zoom=prevZoom; render();
+  const studyById = i => state.studies.find(s=>s.n===Number(i));
+  const cites = n => { const l=(n.studies||[]).map(studyById).filter(Boolean); return l.length? `<div class="cite">Estudos: ${l.map(s=>"["+s.n+"]").join(" ")}</div>`:""; };
+  function section(n, num, depth){
+    const tag = depth===1?"h3":"h4";
+    let h = `<div class="pt"><${tag}>${esc(num)} ${esc(n.title)}</${tag}>`;
+    if(n.link?.explanation) h += `<div class="lnk"><b>${esc(n.link.label||"")}</b> · ${esc(n.link.explanation)}</div>`;
+    h += `<p style="margin:0 0 3pt">${esc(n.summary||"")}</p>${cites(n)}</div>`;
+    if(n.children.length) h += `<div class="lvl">${n.children.map((c,i)=>section(c, `${num}${i+1}.`, depth+1)).join("")}</div>`;
+    return h;
+  }
+  const date = new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+  let html = `<h1>${esc(state.topic)}</h1>
+    <div class="pmeta">Fio de Estudo · ${esc(date)}${state.studies.length? ` · ${state.studies.length} estudos do OpenAlex`:""}${state.example?" · mapa de exemplo":""}</div>
+    <p class="psum">${esc(state.summary)}</p>
+    <div class="pmap">${svg.outerHTML}</div>
+    <h2 class="newpage">O estudo, ponto a ponto</h2>
+    <p class="cite">Cada ponto mostra, na faixa amarela, como ele se liga ao ponto de cima.</p>`;
+  html += state.root.children.map((b,i)=>`<section>${section(b, `${i+1}.`, 1).replace(/^<div class="pt"><h3>/,'<div class="pt"><h3 style="font-family:var(--display);font-weight:400;font-size:15pt;margin-top:16pt">')}</section>`).join("");
+  const xs=(state.crosslinks||[]).map(c=>{ const a=byId.get(String(c.from)), b=byId.get(String(c.to)); return a&&b? `<li class="pt"><b>${esc(a.title)}</b> ↔ <b>${esc(b.title)}</b>${c.label?` <span class="cite">(${esc(c.label)})</span>`:""}<br>${esc(c.explanation)}</li>`:""; }).join("");
+  if(xs) html += `<h2>Conexões entre ramos</h2><ul style="padding-left:16pt">${xs}</ul>`;
+  if(state.studies.length) html += `<h2>Referências</h2><ol class="refs">${state.studies.map(s=>{ const url=s.doi? "https://doi.org/"+s.doi.replace(/^https?:\/\/doi.org\//,""):s.url;
+      return `<li value="${s.n}">${esc(s.authors)}${s.authors?". ":""}<i>${esc(s.title)}</i>.${s.venue?" "+esc(s.venue)+".":""}${s.year?" "+s.year+".":""} ${esc(url)}</li>`; }).join("")}</ol>`;
+  else html += `<h2>Referências</h2><p class="cite">Este mapa foi gerado sem estudos da base OpenAlex. Busque fontes em Google Acadêmico, SciELO ou OpenAlex.</p>`;
+  $("#printView").innerHTML = html;
+  const oldTitle=document.title; document.title = `Fio de Estudo - ${state.topic}`;
+  const done=()=>{ document.title=oldTitle; window.removeEventListener("afterprint",done); };
+  window.addEventListener("afterprint",done);
+  window.print();
+}
+$("#exportPdf").onclick=exportPdf;
+if(window.claude?.use) $("#exportPdf").hidden=true;
 $("#saveKey").onclick=()=>{ const p=$("#provider").value; store.set("fio.provider",p); store.set("fio.key."+p,$("#apiKey").value.trim()); store.set("fio.model."+p,$("#model").value.trim()); status("Chave salva neste navegador."); };
 $("#provider").onchange=()=>{ store.set("fio.provider",$("#provider").value); syncProvider(); };
 
