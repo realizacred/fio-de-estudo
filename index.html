@@ -387,7 +387,7 @@ async function ask(prompt, onProgress){
   const j = await r.json(); return parseJSON((j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join(""));
 }
 const PROVIDERS = {
-  gemini:{models:["gemini-2.5-flash","gemini-2.5-pro","gemini-2.5-flash-lite"],
+  gemini:{models:["gemini-flash-latest","gemini-pro-latest","gemini-flash-lite-latest"],
     help:'Crie uma chave grátis em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. A cota grátis tem limite diário de pedidos.'},
   claude:{models:["claude-sonnet-5-5","claude-opus-5-5","claude-haiku-5-5"],
     help:'Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Cobra alguns centavos por mapa.'}
