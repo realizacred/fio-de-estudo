@@ -376,6 +376,7 @@ async function ask(prompt, onProgress){
       headers:{"content-type":"application/json","x-goog-api-key":key},
       body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}], generationConfig:{responseMimeType:"application/json", maxOutputTokens:12000}})});
     if(!r.ok){ const e=await r.text();
+      if(r.status===404 && model!=="gemini-flash-latest"){ $("#model").value="gemini-flash-latest"; store.set("fio.model.gemini","gemini-flash-latest"); return ask(prompt, onProgress); }
       if(r.status===429) throw new Error("A cota grátis do Gemini acabou por agora. Espere um pouco (ou até amanhã) e tente de novo.");
       throw new Error("Gemini: "+r.status+" "+e.slice(0,200)); }
     const j = await r.json(); return parseJSON((j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join(""));
@@ -395,7 +396,8 @@ const PROVIDERS = {
 function syncProvider(){
   const p=$("#provider").value;
   $("#models").innerHTML = PROVIDERS[p].models.map(m=>`<option value="${m}"></option>`).join("");
-  $("#model").value = store.get("fio.model."+p) || PROVIDERS[p].models[0];
+  const saved = store.get("fio.model."+p);
+  $("#model").value = (saved && !/^gemini-[12]\./.test(saved)) ? saved : PROVIDERS[p].models[0];
   $("#apiKey").value = store.get("fio.key."+p) || "";
   $("#keyHelp").innerHTML = PROVIDERS[p].help + " A chave fica só neste navegador e vai direto para o serviço escolhido.";
 }
