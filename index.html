@@ -371,16 +371,28 @@ async function ask(prompt, onProgress){
   const key = $("#apiKey").value.trim();
   const model = $("#model").value.trim() || PROVIDERS[prov].models[0];
   if(!key){ $("#keyBox").open=true; throw new Error(`Cole sua chave ${prov==="gemini"?"do Gemini":"da Anthropic"} na configuração logo abaixo da busca.`); }
-  if(prov==="gemini"){
+  if(prov==="gemini") return askGemini(prompt, key, model, 0);
+  return askClaude(prompt, key, model);
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function askGemini(prompt, key, model, attempt){
+  {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",
       headers:{"content-type":"application/json","x-goog-api-key":key},
       body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}], generationConfig:{responseMimeType:"application/json", maxOutputTokens:12000}})});
     if(!r.ok){ const e=await r.text();
-      if(r.status===404 && model!=="gemini-flash-latest"){ $("#model").value="gemini-flash-latest"; store.set("fio.model.gemini","gemini-flash-latest"); return ask(prompt, onProgress); }
+      if(r.status===404 && model!=="gemini-flash-latest"){ $("#model").value="gemini-flash-latest"; store.set("fio.model.gemini","gemini-flash-latest"); return askGemini(prompt, key, "gemini-flash-latest", attempt); }
+      if(r.status===503 || r.status===500){
+        if(attempt<2){ status(`O Gemini está ocupado. Tentando de novo em ${5*(attempt+1)} segundos…`); await sleep(5000*(attempt+1)); return askGemini(prompt, key, model, attempt+1); }
+        if(model!=="gemini-flash-lite-latest"){ status("O Gemini continua ocupado. Tentando com o modelo mais leve…"); return askGemini(prompt, key, "gemini-flash-lite-latest", 0); }
+        throw new Error("Os servidores do Gemini estão sobrecarregados agora. Tente de novo em alguns minutos.");
+      }
       if(r.status===429) throw new Error("A cota grátis do Gemini acabou por agora. Espere um pouco (ou até amanhã) e tente de novo.");
       throw new Error("Gemini: "+r.status+" "+e.slice(0,200)); }
     const j = await r.json(); return parseJSON((j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join(""));
   }
+}
+async function askClaude(prompt, key, model){
   const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{
       "content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
     body:JSON.stringify({model, max_tokens:12000, messages:[{role:"user",content:prompt}]})});
