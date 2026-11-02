@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html{color-scheme:light}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Fio de Estudo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: caderno de estudo. Busca no topo, mapa em árvore à esquerda, painel "o fio" à direita (empilha no celular). */
+:root{
+  --paper:#F3F5F4; --sheet:#FFFFFF; --ink:#18262B; --muted:#5A6B70; --rule:#D5DEDD;
+  --accent:#23607A; --accent-soft:#E1ECF0; --marker:#F4D44D; --marker-ink:#3B3000;
+  --node:#FFFFFF; --node-root:#18262B; --node-root-ink:#F3F5F4; --edge:#9AAEB2; --danger:#A33A2C;
+  --display:"Young Serif", Georgia, "Times New Roman", serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11191C; --sheet:#172226; --ink:#E4ECEC; --muted:#93A6AA; --rule:#2B3A3F;
+  --accent:#7FB8D0; --accent-soft:#1E3440; --marker:#D9B92E; --marker-ink:#1A1500;
+  --node:#1B282D; --node-root:#E4ECEC; --node-root-ink:#11191C; --edge:#4E6469; --danger:#E08474; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11191C; --sheet:#172226; --ink:#E4ECEC; --muted:#93A6AA; --rule:#2B3A3F;
+  --accent:#7FB8D0; --accent-soft:#1E3440; --marker:#D9B92E; --marker-ink:#1A1500;
+  --node:#1B282D; --node-root:#E4ECEC; --node-root-ink:#11191C; --edge:#4E6469; --danger:#E08474; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;box-sizing:border-box}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-height:100%}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 24px}
+.brand h1{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0;line-height:1.1;text-wrap:balance}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+form.search{flex:1 1 360px;display:flex;gap:8px;min-width:0}
+form.search input{flex:1;min-width:0;padding:10px 14px;border:1.5px solid var(--rule);border-radius:8px;background:var(--sheet)}
+form.search input:focus{border-color:var(--accent);outline:none}
+.btn{padding:10px 16px;border-radius:8px;border:1.5px solid var(--accent);background:var(--accent);color:var(--paper);font-weight:600;cursor:pointer;white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.55;cursor:progress}
+.btn.small{padding:6px 10px;font-size:.85rem}
+.status{font-size:.88rem;color:var(--muted);min-height:1.4em;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.status.err{color:var(--danger)}
+.chip{font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--marker);color:var(--marker-ink)}
+details.key{font-size:.88rem;color:var(--muted)}
+details.key summary{cursor:pointer}
+details.key .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+details.key input,details.key select{padding:6px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);min-width:0;flex:1 1 220px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;flex:1;min-height:560px}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
+.mapwrap{position:relative;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;overflow:hidden;min-height:460px;display:flex;flex-direction:column}
+.maptools{display:flex;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.maptools .title{font-family:var(--display);font-size:1.05rem;margin-right:auto;min-width:0}
+.maptools button{border:1px solid var(--rule);background:var(--paper);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.85rem}
+.canvas{flex:1;overflow:auto;position:relative;
+  background-image:radial-gradient(var(--rule) 1px,transparent 1px);background-size:22px 22px}
+svg.map{display:block}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.6}
+.edge.on{stroke:var(--accent);stroke-width:3}
+.cross{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 5;opacity:.55}
+.elabel rect{fill:var(--sheet);stroke:var(--rule)}
+.elabel text{fill:var(--muted);font:500 11px var(--body)}
+.elabel{cursor:pointer}
+.elabel.on rect{fill:var(--marker);stroke:var(--marker)}
+.elabel.on text{fill:var(--marker-ink)}
+.node{cursor:pointer}
+.node rect.box{fill:var(--node);stroke:var(--rule);stroke-width:1.2}
+.node text{fill:var(--ink);font:500 13px var(--body)}
+.node.root rect.box{fill:var(--node-root);stroke:var(--node-root)}
+.node.root text{fill:var(--node-root-ink);font:400 16px var(--display)}
+.node.path rect.box{stroke:var(--accent);stroke-width:2}
+.node.sel rect.box{fill:var(--marker);stroke:var(--marker)}
+.node.sel text{fill:var(--marker-ink)}
+.node .tog circle{fill:var(--sheet);stroke:var(--edge)}
+.node .tog text{fill:var(--muted);font:600 12px var(--mono)}
+.node:focus-visible rect.box{stroke:var(--accent);stroke-width:3}
+aside.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:18px;overflow:auto;min-width:0;max-height:calc(100vh - 40px);position:sticky;top:16px;align-self:start}
+@media (max-width:900px){aside.panel{max-height:none;position:static}}
+.panel h2{font-family:var(--display);font-weight:400;font-size:1.4rem;margin:0 0 6px;line-height:1.2;text-wrap:balance}
+.panel h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px;font-weight:600}
+.panel p{margin:0 0 8px}
+.thread{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.thread li{position:relative;padding:0 0 12px 22px;border-left:2px solid var(--accent);margin-left:6px}
+.thread li:last-child{border-left-color:transparent;padding-bottom:0}
+.thread li::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--sheet);border:2px solid var(--accent)}
+.thread li.cur::before{background:var(--marker);border-color:var(--marker)}
+.thread .t{font-weight:600;cursor:pointer;background:none;border:0;padding:0;text-align:left}
+.thread .t:hover{text-decoration:underline}
+.thread .why{font-size:.88rem;color:var(--muted);margin-top:2px}
+.thread .rel{font-family:var(--mono);font-size:.72rem;color:var(--accent);text-transform:lowercase}
+.studies{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.studies li{font-size:.88rem;border-top:1px solid var(--rule);padding-top:8px}
+.studies a{color:var(--accent);font-weight:500}
+.studies .meta{color:var(--muted);font-size:.8rem;font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-right:4px}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{font-size:.85rem;color:var(--accent);border:1px solid var(--rule);border-radius:6px;padding:4px 10px;text-decoration:none}
+.xlist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:.88rem}
+.xlist button{background:none;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-align:left}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.empty{color:var(--muted);font-size:.9rem}
+.allstudies summary{cursor:pointer;font-size:.88rem;color:var(--accent);margin-top:14px}
+@media (prefers-reduced-motion:no-preference){.node rect.box,.edge{transition:stroke .2s,fill .2s}}
+</style>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>Fio de Estudo</h1>
+      <p>Digite um tema. O app busca estudos e monta um mapa mental em que cada ligação explica por que um ponto leva ao outro.</p>
+    </div>
+    <form class="search" id="searchForm">
+      <label for="kw" class="sr" hidden>Tema</label>
+      <input id="kw" type="search" placeholder="Ex.: sono e memória, inflação, fotossíntese…" autocomplete="off" required>
+      <button class="btn" id="go" type="submit">Montar mapa</button>
+    </form>
+  </header>
+  <div class="status" id="status"></div>
+  <details class="key" id="keyBox" hidden>
+    <summary>Configurar a IA que monta o mapa (Gemini grátis ou Claude)</summary>
+    <div class="row">
+      <select id="provider" aria-label="IA">
+        <option value="gemini">Gemini (Google, cota grátis)</option>
+        <option value="claude">Claude (Anthropic, pago por uso)</option>
+      </select>
+      <input id="model" list="models" placeholder="modelo" autocomplete="off" aria-label="Modelo">
+      <datalist id="models"></datalist>
+    </div>
+    <div class="row">
+      <input id="apiKey" type="password" placeholder="Cole aqui sua chave" autocomplete="off" aria-label="Chave da API">
+      <button class="btn small ghost" id="saveKey" type="button">Salvar neste navegador</button>
+    </div>
+    <p style="margin:6px 0 0" id="keyHelp"></p>
+  </details>
+  <main>
+    <section class="mapwrap" aria-label="Mapa mental">
+      <div class="maptools">
+        <span class="title" id="mapTitle">Mapa</span>
+        <button type="button" id="zoomOut" aria-label="Diminuir">−</button>
+        <button type="button" id="zoomIn" aria-label="Aumentar">+</button>
+        <button type="button" id="expandAll">Abrir tudo</button>
+        <button type="button" id="collapseAll">Recolher</button>
+      </div>
+      <div class="canvas" id="canvas"><svg class="map" id="svg" role="tree"></svg></div>
+    </section>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </main>
+</div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = {get(k){try{return localStorage.getItem(k)}catch{return null}}, set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+
+let sample = null;          // Claude dentro do claude.ai
+let state = null;           // mapa atual
+let selected = null;        // id do nó selecionado
+let zoom = 1;
+let busy = false;
+
+/* ---------- Exemplo inicial (marcado como exemplo) ---------- */
+const EXAMPLE = {
+  topic:"Sono e memória", example:true, source:"exemplo",
+  summary:"Dormir não é uma pausa: é durante o sono que o cérebro reorganiza e fixa o que foi aprendido no dia. Entender como isso acontece explica por que estudar virando a noite costuma render menos.",
+  studies:[], crosslinks:[
+    {from:"2.1", to:"3.1", label:"mesmo mecanismo", explanation:"A reativação de memórias no sono profundo é justamente o que a privação de sono impede; por isso a noite mal dormida atinge a consolidação."},
+    {from:"4.2", to:"1.2", label:"aplica", explanation:"Revisar antes de dormir aproveita a fase de consolidação: o conteúdo revisado é o que o hipocampo tende a reativar."}
+  ],
+  root:{id:"0", title:"Sono e memória", children:[
+    {id:"1", title:"Como a memória se forma", summary:"A memória passa por etapas: codificação (aprender), consolidação (estabilizar) e evocação (lembrar). O sono atua principalmente na consolidação.",
+     link:{label:"base para", explanation:"Para entender o papel do sono, primeiro é preciso saber em que etapa da memória ele atua."},
+     children:[
+      {id:"1.1", title:"Codificação", summary:"É o registro inicial da informação enquanto você estuda. Atenção e sono da noite anterior influenciam a qualidade desse registro.",
+       link:{label:"começa com", explanation:"A formação da memória começa pela codificação: sem registro, não há o que consolidar."}, children:[]},
+      {id:"1.2", title:"Consolidação", summary:"Processo que transforma a memória frágil em duradoura, transferindo-a do hipocampo para o córtex.",
+       link:{label:"continua com", explanation:"Depois de codificada, a memória ainda é frágil; a consolidação é a etapa que a estabiliza, e é aqui que o sono entra."}, children:[]}
+     ]},
+    {id:"2", title:"Fases do sono", summary:"O sono alterna ciclos de cerca de 90 minutos entre sono não REM (leve e profundo) e sono REM. Cada fase contribui de forma diferente para a memória.",
+     link:{label:"ocorre em", explanation:"A consolidação não acontece de forma uniforme: depende das fases que o cérebro atravessa durante a noite."},
+     children:[
+      {id:"2.1", title:"Sono profundo (ondas lentas)", summary:"Fase em que o hipocampo 'reproduz' o que foi aprendido, fortalecendo memórias de fatos e conceitos.",
+       link:{label:"inclui", explanation:"Entre as fases do sono, o sono de ondas lentas é o mais ligado à memória de conteúdo, como datas e conceitos."}, children:[]},
+      {id:"2.2", title:"Sono REM", summary:"Fase dos sonhos vívidos, associada à integração de memórias emocionais e de habilidades.",
+       link:{label:"inclui", explanation:"O REM é a outra grande fase do ciclo e complementa o sono profundo, atuando sobre emoções e procedimentos."}, children:[]}
+     ]},
+    {id:"3", title:"Privação de sono", summary:"Dormir pouco prejudica tanto a capacidade de aprender no dia seguinte quanto a fixação do que já foi estudado.",
+     link:{label:"é prejudicado por", explanation:"Se o sono sustenta a memória, retirá-lo mostra o efeito ao contrário: a memória falha."},
+     children:[
+      {id:"3.1", title:"Menos consolidação", summary:"Sem sono profundo suficiente, a reativação de memórias diminui e parte do conteúdo estudado se perde.",
+       link:{label:"causa", explanation:"A privação de sono corta justamente as fases de consolidação, então o que foi estudado não se fixa."}, children:[]},
+      {id:"3.2", title:"Atenção reduzida", summary:"Cansaço reduz o foco, o que piora a codificação no dia seguinte.",
+       link:{label:"causa", explanation:"Além de atrapalhar a consolidação, a falta de sono reduz a atenção, enfraquecendo a etapa de codificação."}, children:[]}
+     ]},
+    {id:"4", title:"Aplicação nos estudos", summary:"O conhecimento sobre sono e memória vira estratégia prática de estudo.",
+     link:{label:"leva a", explanation:"Sabendo como o sono fixa a memória, dá para organizar a rotina de estudo para aproveitar isso."},
+     children:[
+      {id:"4.1", title:"Estudo espaçado", summary:"Distribuir o estudo em vários dias permite várias noites de consolidação.",
+       link:{label:"sugere", explanation:"Cada noite de sono é uma rodada de consolidação; espaçar o estudo multiplica essas rodadas."}, children:[]},
+      {id:"4.2", title:"Revisar antes de dormir", summary:"Uma revisão curta à noite tende a ser priorizada na consolidação.",
+       link:{label:"sugere", explanation:"Como o sono reprocessa o que foi visto recentemente, revisar à noite coloca o conteúdo certo na fila."}, children:[]}
+     ]}
+  ]}
+};
+
+/* ---------- Utilidades da árvore ---------- */
+function walk(n, fn, parent=null, depth=0){ fn(n,parent,depth); (n.children||[]).forEach(c=>walk(c,fn,n,depth+1)); }
+function index(){ const m=new Map(); walk(state.root,(n,p,d)=>{n._p=p; n._d=d; m.set(n.id,n);}); return m; }
+let byId = new Map();
+function pathTo(id){ const out=[]; let n=byId.get(id); while(n){out.unshift(n); n=n._p;} return out; }
+function normalize(n, pid){
+  n.children = Array.isArray(n.children)? n.children : [];
+  n.children.forEach((c,i)=>{ if(!c.id || byIdTmp.has(c.id)) c.id = (pid==="0"?"":pid+".")+(i+1); byIdTmp.add(c.id); c.link=c.link||{label:"relaciona",explanation:""}; c.studies=Array.isArray(c.studies)?c.studies:[]; normalize(c,c.id); });
+}
+let byIdTmp=new Set();
+
+/* ---------- Layout ---------- */
+const NW=190, LINE=17, PADY=10, GAPX=110, GAPY=16;
+function wrap(text, max=24){
+  const words=String(text).split(/\s+/); const lines=[]; let cur="";
+  for(const w of words){ if((cur+" "+w).trim().length>max && cur){lines.push(cur); cur=w;} else cur=(cur+" "+w).trim(); }
+  if(cur) lines.push(cur); if(lines.length>3){lines.length=3; lines[2]=lines[2].replace(/.{0,2}$/,"…");} return lines;
+}
+function layout(){
+  let y=0; let maxX=0;
+  function place(n, depth){
+    n._lines = wrap(n.title, depth===0?18:24);
+    n._h = n._lines.length*LINE + PADY*2 + (depth===0?6:0);
+    n._x = depth*(NW+GAPX);
+    maxX=Math.max(maxX,n._x);
+    const kids = n.collapsed? [] : n.children;
+    if(!kids.length){ n._y = y; y += n._h + GAPY; }
+    else { kids.forEach(c=>place(c,depth+1)); const f=kids[0], l=kids[kids.length-1]; n._y = (f._y + f._h/2 + l._y + l._h/2)/2 - n._h/2; }
+  }
+  place(state.root,0);
+  return {w:maxX+NW+40, h:Math.max(y,state.root._y+state.root._h)+20};
+}
+
+/* ---------- Desenho ---------- */
+function render(){
+  if(!state) return;
+  byId = index();
+  const {w,h} = layout();
+  const svg = $("#svg");
+  const pathIds = new Set(selected? pathTo(selected).map(n=>n.id):[]);
+  const pad=24;
+  svg.setAttribute("width", (w+pad*2)*zoom); svg.setAttribute("height",(h+pad*2)*zoom);
+  svg.setAttribute("viewBox", `${-pad} ${-pad} ${w+pad*2} ${h+pad*2}`);
+  let edges="", labels="", nodes="", cross="";
+  walk(state.root,(n,p)=>{
+    if(!isVisible(n)) return;
+    if(p){
+      const x1=p._x+NW, y1=p._y+p._h/2, x2=n._x, y2=n._y+n._h/2, mx=(x1+x2)/2;
+      const on = pathIds.has(n.id);
+      edges += `<path class="edge${on?" on":""}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;
+      const lab = (n.link?.label||"").slice(0,22);
+      if(lab){ const lw = lab.length*6.2+14, lx = x2-lw-6, ly=y2-9;
+        labels += `<g class="elabel${on?" on":""}" data-id="${esc(n.id)}" tabindex="0" role="button" aria-label="Ligação: ${esc(lab)}"><rect x="${lx}" y="${ly}" width="${lw}" height="18" rx="9"/><text x="${lx+7}" y="${ly+13}">${esc(lab)}</text></g>`; }
+    }
+    const isRoot=!p, sel=n.id===selected, onp=pathIds.has(n.id);
+    const cls=`node${isRoot?" root":""}${sel?" sel":onp?" path":""}`;
+    let t = n._lines.map((l,i)=>`<tspan x="${n._x+14}" y="${n._y+PADY+LINE*(i+1)-4+(isRoot?3:0)}">${esc(l)}</tspan>`).join("");
+    let tog="";
+    if(n.children.length && !isRoot){ tog=`<g class="tog" data-tog="${esc(n.id)}"><circle cx="${n._x+NW}" cy="${n._y+n._h/2}" r="9"/><text x="${n._x+NW}" y="${n._y+n._h/2+4}" text-anchor="middle">${n.collapsed?"+":"−"}</text></g>`; }
+    nodes += `<g class="${cls}" data-id="${esc(n.id)}" tabindex="0" role="treeitem" aria-selected="${sel}"><rect class="box" x="${n._x}" y="${n._y}" width="${NW}" height="${n._h}" rx="${isRoot?12:8}"/><text>${t}</text>${tog}</g>`;
+  });
+  (state.crosslinks||[]).forEach(c=>{
+    const a=byId.get(String(c.from)), b=byId.get(String(c.to));
+    if(!a||!b||!isVisible(a)||!isVisible(b)) return;
+    const x1=a._x+NW/2, y1=a._y+a._h, x2=b._x+NW/2, y2=b._y; const bend = Math.max(40, Math.abs(y2-y1)/3);
+    cross += `<path class="cross" d="M${x1},${y1} C${x1+bend},${(y1+y2)/2} ${x2-bend},${(y1+y2)/2} ${x2},${y2}"/>`;
+  });
+  svg.innerHTML = cross+edges+nodes+labels;
+  $("#mapTitle").textContent = state.topic + (state.example?"  (exemplo)":"");
+}
+function isVisible(n){ let p=n._p; while(p){ if(p.collapsed) return false; p=p._p; } return true; }
+
+/* ---------- Painel ---------- */
+function studyLinks(q){
+  const e=encodeURIComponent(q);
+  return `<div class="links">
+    <a href="https://scholar.google.com/scholar?q=${e}" target="_blank" rel="noopener">Google Acadêmico</a>
+    <a href="https://search.scielo.org/?q=${e}" target="_blank" rel="noopener">SciELO</a>
+    <a href="https://openalex.org/works?search=${e}" target="_blank" rel="noopener">OpenAlex</a></div>`;
+}
+function studyItem(s){
+  const url = s.doi ? "https://doi.org/"+s.doi.replace(/^https?:\/\/doi.org\//,"") : s.url;
+  return `<li><span class="num">[${s.n}]</span><a href="${esc(url)}" target="_blank" rel="noopener">${esc(s.title)}</a>
+    <div class="meta">${esc(s.authors)}${s.year?" · "+s.year:""}${s.venue?" · "+esc(s.venue):""}${s.cited!=null?" · "+s.cited+" citações":""}</div></li>`;
+}
+function renderPanel(){
+  const P=$("#panel");
+  if(!state){ P.innerHTML=""; return; }
+  const n = byId.get(selected) || state.root;
+  const path = pathTo(n.id);
+  const isRoot = n===state.root;
+  let html = `<h2>${esc(isRoot? state.topic : n.title)}</h2><p>${esc(isRoot? state.summary : n.summary)}</p>`;
+  if(!isRoot){
+    html += `<h3>O fio até aqui</h3><ol class="thread">` + path.map((p,i)=>{
+      const cur = p===n;
+      const why = i===0 ? `<div class="why">Tema central</div>` : `<div class="why"><span class="rel">${esc(p.link?.label)}</span> · ${esc(p.link?.explanation)}</div>`;
+      return `<li class="${cur?"cur":""}"><button class="t" data-go="${esc(p.id)}">${esc(i===0?state.topic:p.title)}</button>${why}</li>`;
+    }).join("") + `</ol>`;
+  }
+  if(n.children.length){
+    html += `<h3>Desdobra-se em</h3><ul class="xlist">` + n.children.map(c=>`<li><button data-go="${esc(c.id)}">${esc(c.title)}</button> <span class="rel" style="font-family:var(--mono);font-size:.72rem;color:var(--muted)">${esc(c.link?.label)}</span><div class="why" style="color:var(--muted)">${esc(c.link?.explanation)}</div></li>`).join("") + `</ul>`;
+  }
+  const xs = (state.crosslinks||[]).filter(c=>String(c.from)===n.id||String(c.to)===n.id);
+  if(xs.length){
+    html += `<h3>Também se conecta com</h3><ul class="xlist">` + xs.map(c=>{
+      const other = byId.get(String(String(c.from)===n.id? c.to : c.from)); if(!other) return "";
+      return `<li><button data-go="${esc(other.id)}">${esc(other.title)}</button><div style="color:var(--muted)">${esc(c.explanation)}</div></li>`;
+    }).join("") + `</ul>`;
+  }
+  const own = (isRoot? state.studies : (n.studies||[]).map(i=>state.studies.find(s=>s.n===Number(i))).filter(Boolean));
+  html += `<h3>Estudos</h3>`;
+  if(own.length) html += `<ul class="studies">${(isRoot?own.slice(0,6):own).map(studyItem).join("")}</ul>`;
+  else if(state.studies.length) html += `<p class="empty">Nenhum dos estudos encontrados trata diretamente deste ponto. Busque mais:</p>`;
+  else html += `<p class="empty">${state.example?"Este mapa é um exemplo. Faça uma busca para ver estudos reais.":"Não foi possível buscar estudos daqui. Abra a busca nas bases acadêmicas:"}</p>`;
+  if(!own.length || isRoot) html += studyLinks(isRoot? state.topic : `${n.title} ${state.topic}`);
+  if(isRoot && state.studies.length>6) html += `<details class="allstudies"><summary>Ver todos os ${state.studies.length} estudos</summary><ul class="studies">${state.studies.slice(6).map(studyItem).join("")}</ul></details>`;
+  html += `<div class="actions">`;
+  if(!state.example) html += `<button class="btn small" id="deeper" ${busy?"disabled":""}>${n.children.length?"Aprofundar mais este ponto":"Aprofundar este ponto"}</button>`;
+  if(!isRoot) html += `<button class="btn small ghost" data-go="${esc(n._p.id)}">Voltar um nível</button>`;
+  html += `</div>`;
+  P.innerHTML = html;
+}
+function select(id){ selected=id; let n=byId.get(id); while(n&&n._p){ n._p.collapsed=false; n=n._p; } render(); renderPanel();
+  const g=$(`#svg .node[data-id="${CSS.escape(id)}"]`); if(g){ const c=$("#canvas"), r=g.getBoundingClientRect(), cr=c.getBoundingClientRect();
+    if(r.left<cr.left||r.right>cr.right||r.top<cr.top||r.bottom>cr.bottom) c.scrollBy({left:r.left-cr.left-cr.width/3, top:r.top-cr.top-cr.height/2, behavior:"smooth"}); }
+  if(window.innerWidth<=900 && id) document.getElementById("panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ---------- Status ---------- */
+function status(msg, err=false){ const s=$("#status"); s.className="status"+(err?" err":""); s.innerHTML=msg; }
+
+/* ---------- Estudos (OpenAlex) ---------- */
+function abstractOf(inv){ if(!inv) return ""; const arr=[]; for(const [w,pos] of Object.entries(inv)) pos.forEach(p=>arr[p]=w); return arr.join(" "); }
+async function searchStudies(q){
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(q)}&per-page=12&filter=has_abstract:true&select=id,doi,title,publication_year,authorships,cited_by_count,abstract_inverted_index,primary_location`;
+  const ctl = new AbortController(); const t=setTimeout(()=>ctl.abort(),12000);
+  try{
+    const r = await fetch(url,{signal:ctl.signal}); if(!r.ok) throw new Error("HTTP "+r.status);
+    const j = await r.json();
+    return (j.results||[]).map((w,i)=>({n:i+1, title:w.title||"Sem título", year:w.publication_year, doi:w.doi, url:w.id,
+      cited:w.cited_by_count, venue:w.primary_location?.source?.display_name||"",
+      authors:(w.authorships||[]).slice(0,3).map(a=>a.author?.display_name).filter(Boolean).join(", ")+((w.authorships||[]).length>3?" et al.":""),
+      abstract:abstractOf(w.abstract_inverted_index).slice(0,900)}));
+  } finally { clearTimeout(t); }
+}
+
+/* ---------- Claude ---------- */
+function parseJSON(text){
+  let t = String(text).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");
+  const a=t.indexOf("{"), b=t.lastIndexOf("}"); if(a<0||b<0) throw new Error("Resposta sem JSON");
+  return JSON.parse(t.slice(a,b+1));
+}
+async function ask(prompt, onProgress){
+  if(sample){
+    const r = await sample(prompt,{modelTier:"complex", onText:({text})=>onProgress?.(text.length)});
+    return parseJSON(r.text);
+  }
+  const prov = $("#provider").value;
+  const key = $("#apiKey").value.trim();
+  const model = $("#model").value.trim() || PROVIDERS[prov].models[0];
+  if(!key){ $("#keyBox").open=true; throw new Error(`Cole sua chave ${prov==="gemini"?"do Gemini":"da Anthropic"} na configuração logo abaixo da busca.`); }
+  if(prov==="gemini"){
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",
+      headers:{"content-type":"application/json","x-goog-api-key":key},
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}], generationConfig:{responseMimeType:"application/json", maxOutputTokens:12000}})});
+    if(!r.ok){ const e=await r.text();
+      if(r.status===429) throw new Error("A cota grátis do Gemini acabou por agora. Espere um pouco (ou até amanhã) e tente de novo.");
+      throw new Error("Gemini: "+r.status+" "+e.slice(0,200)); }
+    const j = await r.json(); return parseJSON((j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join(""));
+  }
+  const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{
+      "content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model, max_tokens:12000, messages:[{role:"user",content:prompt}]})});
+  if(!r.ok){ const e=await r.text(); throw new Error("API da Anthropic: "+r.status+" "+e.slice(0,200)); }
+  const j = await r.json(); return parseJSON((j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join(""));
+}
+const PROVIDERS = {
+  gemini:{models:["gemini-2.5-flash","gemini-2.5-pro","gemini-2.5-flash-lite"],
+    help:'Crie uma chave grátis em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. A cota grátis tem limite diário de pedidos.'},
+  claude:{models:["claude-sonnet-5-5","claude-opus-5-5","claude-haiku-5-5"],
+    help:'Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Cobra alguns centavos por mapa.'}
+};
+function syncProvider(){
+  const p=$("#provider").value;
+  $("#models").innerHTML = PROVIDERS[p].models.map(m=>`<option value="${m}"></option>`).join("");
+  $("#model").value = store.get("fio.model."+p) || PROVIDERS[p].models[0];
+  $("#apiKey").value = store.get("fio.key."+p) || "";
+  $("#keyHelp").innerHTML = PROVIDERS[p].help + " A chave fica só neste navegador e vai direto para o serviço escolhido.";
+}
+
+const NODE_FORMAT = `cada nó: {"id": "1.2", "title": "até 6 palavras", "summary": "2 a 3 frases explicando o ponto de forma didática", "link": {"label": "2 a 4 palavras em minúsculas, como um verbo de ligação: causa, depende de, é medido por, contrasta com", "explanation": "1 a 2 frases dizendo COMO e POR QUE este ponto se liga ao ponto pai, citando os dois"}, "studies": [números dos estudos que sustentam este ponto], "children": [...]}`;
+
+function mapPrompt(topic, studies){
+  const list = studies.length ? studies.map(s=>`[${s.n}] ${s.title} (${s.year||"s/d"}). ${s.abstract}`).join("\n\n") : "(nenhum estudo disponível: use seu conhecimento consolidado e deixe \"studies\" vazio)";
+  return `Você é um professor que monta mapas mentais de estudo em português do Brasil, claros e coerentes.
+
+TEMA: "${topic}"
+
+ESTUDOS ENCONTRADOS (use como base e cite pelo número):
+${list}
+
+Monte um mapa mental hierárquico sobre o tema.
+Regras:
+- 4 a 6 ramos principais, cada um com 2 a 4 subpontos. Profundidade máxima: 2 níveis abaixo do tema.
+- Ordene os ramos numa sequência lógica de aprendizado (do fundamento à aplicação).
+- Não perca o fio: cada subponto precisa decorrer do SEU ramo, não do tema em geral. A explicação da ligação deve deixar isso explícito.
+- Nada de pontos soltos ou repetidos entre ramos.
+- "studies" só pode conter números da lista acima. Nunca invente estudos, autores ou dados.
+- Inclua 2 a 5 "crosslinks": ligações entre pontos de ramos DIFERENTES que se influenciam, com explicação.
+- ids: ramos "1","2",...; subpontos "1.1","1.2",...
+
+Responda APENAS com JSON válido, sem texto antes ou depois, neste formato:
+{"topic": "nome do tema bem escrito", "summary": "3 a 4 frases apresentando o tema e o caminho do mapa", "children": [ramos], "crosslinks": [{"from": "id", "to": "id", "label": "2 a 4 palavras", "explanation": "1 a 2 frases"}]}
+onde ${NODE_FORMAT}`;
+}
+function deeperPrompt(n){
+  const path = pathTo(n.id);
+  const chain = path.map((p,i)=> i===0? `Tema: ${state.topic}` : `→ (${p.link?.label}) ${p.title}: ${p.summary} [ligação: ${p.link?.explanation}]`).join("\n");
+  const siblings = (n._p?.children||[]).filter(s=>s!==n).map(s=>s.title).join("; ")||"nenhum";
+  const existing = n.children.map(c=>c.title).join("; ")||"nenhum";
+  const studies = state.studies.length? state.studies.map(s=>`[${s.n}] ${s.title} (${s.year||"s/d"}). ${s.abstract.slice(0,400)}`).join("\n") : "(nenhum: deixe studies vazio)";
+  return `Você é um professor ampliando um mapa mental de estudo em português do Brasil.
+
+O FIO do tema até o ponto a aprofundar:
+${chain}
+
+Ponto a aprofundar: "${n.title}" (id ${n.id}).
+Pontos irmãos (não repetir o conteúdo deles): ${siblings}
+Subpontos que já existem (não repetir): ${existing}
+
+Estudos disponíveis:
+${studies}
+
+Crie 2 a 4 novos subpontos que aprofundem "${n.title}" mantendo o fio: cada um deve decorrer diretamente de "${n.title}" e fazer sentido dentro do caminho acima. A explicação de cada ligação deve dizer como o subponto se liga a "${n.title}".
+"studies" só com números da lista; nunca invente estudos.
+ids: "${n.id}.${n.children.length+1}", "${n.id}.${n.children.length+2}", ...
+
+Responda APENAS com JSON válido: {"children": [nós]} onde ${NODE_FORMAT} e "children" de cada novo nó é [].`;
+}
+
+/* ---------- Ações ---------- */
+async function build(topic){
+  if(busy) return; busy=true; $("#go").disabled=true;
+  try{
+    let studies=[], studyNote="";
+    status(`<span class="chip">1/2</span> Buscando estudos sobre “${esc(topic)}”…`);
+    try{ studies = await searchStudies(topic); studyNote = studies.length? `${studies.length} estudos encontrados no OpenAlex` : "Nenhum estudo com resumo encontrado no OpenAlex"; }
+    catch{ studyNote = "Busca de estudos indisponível aqui; o mapa usa o conhecimento do Claude e traz links para as bases acadêmicas"; }
+    status(`<span class="chip">2/2</span> ${esc(studyNote)}. Montando o mapa mental… <span id="prog"></span>`);
+    const data = await ask(mapPrompt(topic, studies), len=>{ const p=$("#prog"); if(p) p.textContent = `(${len} caracteres)`; });
+    byIdTmp = new Set(["0"]);
+    const root = {id:"0", title:data.topic||topic, children:data.children||[]};
+    normalize(root,"0");
+    state = {topic:data.topic||topic, summary:data.summary||"", studies, crosslinks:data.crosslinks||[], root, source:studies.length?"openalex":"none"};
+    selected = "0"; zoom=1; render(); renderPanel(); $("#canvas").scrollTo(0,0);
+    status(`<span class="chip${studies.length?"":" warn"}">${studies.length? studies.length+" estudos" : "sem estudos"}</span> ${esc(studyNote)}. Clique em um ponto para ver o fio até ele.`);
+    store.set("fio.last", JSON.stringify(state, (k,v)=>k.startsWith("_")?undefined:v));
+  }catch(e){
+    status(esc(e?.code==="rate_limited"?"Muitas solicitações seguidas. Aguarde um minuto e tente de novo.": e?.code==="not_granted"?"O acesso ao Claude não foi permitido para esta página.": (e?.message||"Não foi possível montar o mapa.")), true);
+    if(!sample) $("#keyBox").open = true;
+  }finally{ busy=false; $("#go").disabled=false; renderPanel(); }
+}
+async function deepen(){
+  const n = byId.get(selected)||state.root; if(busy) return; busy=true; renderPanel();
+  status(`Aprofundando “${esc(n.title)}” mantendo o fio… <span id="prog"></span>`);
+  try{
+    byIdTmp = new Set([...byId.keys()]);
+    const data = await ask(deeperPrompt(n), len=>{ const p=$("#prog"); if(p) p.textContent=`(${len} caracteres)`; });
+    const kids=(data.children||[]).map(c=>({...c, children:[]}));
+    const tmp={children:kids}; normalize(tmp, n.id);
+    kids.forEach((k,i)=>{ if(byId.has(k.id)) k.id = `${n.id}.${n.children.length+i+1}`; });
+    n.children.push(...kids); n.collapsed=false;
+    status(`${kids.length} novos subpontos em “${esc(n.title)}”.`);
+    store.set("fio.last", JSON.stringify(state, (k,v)=>k.startsWith("_")?undefined:v));
+  }catch(e){ status(esc(e?.message||"Não foi possível aprofundar."), true); }
+  finally{ busy=false; render(); renderPanel(); }
+}
+
+/* ---------- Eventos ---------- */
+$("#searchForm").addEventListener("submit", e=>{ e.preventDefault(); const q=$("#kw").value.trim(); if(q) build(q); });
+$("#svg").addEventListener("click", e=>{
+  const tog=e.target.closest("[data-tog]"); if(tog){ const n=byId.get(tog.dataset.tog); n.collapsed=!n.collapsed; render(); return; }
+  const g=e.target.closest("[data-id]"); if(g) select(g.dataset.id);
+});
+$("#svg").addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ const g=e.target.closest("[data-id]"); if(g){ e.preventDefault(); select(g.dataset.id); } } });
+$("#panel").addEventListener("click", e=>{
+  const go=e.target.closest("[data-go]"); if(go){ select(go.dataset.go); return; }
+  if(e.target.id==="deeper") deepen();
+});
+$("#zoomIn").onclick=()=>{zoom=Math.min(1.8,zoom+.15); render();};
+$("#zoomOut").onclick=()=>{zoom=Math.max(.45,zoom-.15); render();};
+$("#expandAll").onclick=()=>{ walk(state.root,n=>n.collapsed=false); render(); };
+$("#collapseAll").onclick=()=>{ walk(state.root,(n,p,d)=>{ if(d>=1) n.collapsed=true; }); render(); };
+$("#saveKey").onclick=()=>{ const p=$("#provider").value; store.set("fio.provider",p); store.set("fio.key."+p,$("#apiKey").value.trim()); store.set("fio.model."+p,$("#model").value.trim()); status("Chave salva neste navegador."); };
+$("#provider").onchange=()=>{ store.set("fio.provider",$("#provider").value); syncProvider(); };
+
+/* ---------- Início ---------- */
+const last = store.get("fio.last");
+try{ state = last? JSON.parse(last) : null; }catch{ state=null; }
+if(!state){ state = JSON.parse(JSON.stringify(EXAMPLE)); }
+walk(state.root,n=>{ n.children=n.children||[]; });
+selected="0"; render(); renderPanel();
+status(state.example? `<span class="chip warn">exemplo</span> Mapa de exemplo. Digite um tema acima para montar o seu.` : `Último mapa: “${esc(state.topic)}”.`);
+$("#provider").value = store.get("fio.provider")==="claude" ? "claude" : "gemini"; syncProvider();
+
+if(window.claude?.use){
+  window.claude.use("sample").then(s=>{ sample=s; if(!s) $("#keyBox").hidden=false; }).catch(()=>{ $("#keyBox").hidden=false; });
+} else { $("#keyBox").hidden=false; }
+})();
+</script>
+
+</body>
+</html>
